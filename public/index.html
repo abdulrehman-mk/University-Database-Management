@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>University Database</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            padding: 20px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #2a4b7c;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #2a4b7c;
+        }
+
+        h3 {
+            font-size: 16px;
+            text-align: left;
+            margin-bottom: 10px;
+            margin-left: 10px;
+            color: #2a4b7c;
+        }
+
+        #crd {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+            margin-left: 10px;
+            color: #2a4b7c;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background-color: white;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px 14px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e2e8f0;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f5fa;
+        }
+
+        button {
+            margin: 5px;
+            padding: 8px 14px;
+            background-color: #2a4b7c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1c355a;
+        }
+
+        button.selected {
+            background-color: #1c355a;
+            border: 2px solid #5a7b9c;
+        }
+
+        select {
+            margin-left: 10px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            min-width: 200px;
+        }
+
+        a {
+            color: #2a4b7c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        a:hover {
+            color: #16325c;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .summary-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 15px;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid #ccc;
+            border-left: 5px solid #2a4b7c;
+            border-radius: 6px;
+            padding: 14px 20px;
+            min-width: 150px;
+            flex: 1;
+        }
+
+        .summary-card .num {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2a4b7c;
+        }
+
+        .summary-card .lbl {
+            font-size: 13px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .badge-theory { background-color: #3a7ca5; }
+        .badge-lab { background-color: #ce7d29; }
+        .badge-combo { background-color: #4a8b3a; }
+
+        .fail-high { color: #b32d2d; font-weight: bold; }
+    </style>
+</head>
+
+<body>
+    <h1>Database Project</h1>
+    <h2 id="crd">Made By: Abdul Rehman</h2>
+    <h3 style="text-align:center; margin-left:0;"> Batch wise Course Analysis (Curriculum wise)</h3>
+
+    <div x-data="batchApp()" x-init="loadYears()">
+
+        <template x-if="loading">
+            <p style="color: blue; font-weight: bold;">Loading...</p>
+        </template>
+
+        <template x-if="error">
+            <p x-text="error" class="error"></p>
+        </template>
+
+        <hr style="margin: 20px 0;">
+
+        <h3>1. Select Year:</h3>
+        <template x-for="year in years" :key="year.year">
+            <button
+                @click="fetchClasses(year.year)"
+                :class="{'selected': selectedYear === year.year}"
+                x-text="year.year">
+            </button>
+        </template>
+
+        <div x-show="classes.length > 0" style="margin-top: 20px;">
+            <h3>2. Select Batch (Class) for <span x-text="selectedYear" style="color:#2a4b7c;"></span>:</h3>
+            <select x-model="selectedClass" @change="fetchSemesters">
+                <option value="" selected disabled>-- Select Batch --</option>
+                <template x-for="c in classes" :key="c.class">
+                    <option :value="c.class" x-text="c.class"></option>
+                </template>
+            </select>
+        </div>
+
+        <div x-show="semesters.length > 0" style="margin-top: 20px;">
+            <h3>3. Select Semester for <span x-text="selectedClass" style="color:#2a4b7c;"></span>:</h3>
+            <select x-model="selectedSemester" @change="fetchCourseAnalysis">
+                <option value="" selected disabled>-- Select Semester --</option>
+                <template x-for="s in semesters" :key="s.semester">
+                    <option :value="s.semester" x-text="s.semester"></option>
+                </template>
+            </select>
+        </div>
+
+        <hr x-show="courses.length > 0" style="margin: 20px 0;">
+
+        <div x-show="courses.length > 0">
+            <h2 style="margin-top: 0;">
+                Curriculum Summary &mdash;
+                <span x-text="selectedSemester"></span> <span x-text="selectedYear"></span> /
+                <span x-text="selectedClass" style="color:#2a4b7c;"></span>
+            </h2>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="num" x-text="summary.totalCourses"></div>
+                    <div class="lbl">Total Courses</div>
+                </div>
+                <div class="summary-card">
+                    <div class="num" x-text="summary.theoryHours"></div>
+                    <div class="lbl">Total Theory Credit Hours</div>
+                </div>
+                <div class="summary-card">
+                    <div class="num" x-text="summary.labHours"></div>
+                    <div class="lbl">Total Lab Credit Hours</div>
+                </div>
+                <div class="summary-card">
+                    <div class="num" x-text="summary.theoryOnly"></div>
+                    <div class="lbl">Theory Only Courses</div>
+                </div>
+                <div class="summary-card">
+                    <div class="num" x-text="summary.labOnly"></div>
+                    <div class="lbl">Lab Only Courses</div>
+                </div>
+                <div class="summary-card">
+                    <div class="num" x-text="summary.combo"></div>
+                    <div class="lbl">Theory + Lab Courses</div>
+                </div>
+                <div class="summary-card">
+                    <div class="num" x-text="summary.avgBatchPercentage"></div>
+                    <div class="lbl">Batch Avg %</div>
+                </div>
+            </div>
+
+            <h2>Course Analysis (Curriculum wise)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Title</th>
+                        <th>Theory Hrs</th>
+                        <th>Lab Hrs</th>
+                        <th>Curriculum Type</th>
+                        <th>Faculty</th>
+                        <th>Total Students</th>
+                        <th>Avg %</th>
+                        <th>Avg GPA</th>
+                        <th>Pass</th>
+                        <th>Fail</th>
+                        <th>Fail Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="c in courses" :key="c.rid">
+                        <tr>
+                            <td>
+                                <a href="#" @click.prevent="viewStudents(c)" x-text="c.code"></a>
+                            </td>
+                            <td x-text="c.title" style="text-align:left;"></td>
+                            <td x-text="c.theory"></td>
+                            <td x-text="c.lab"></td>
+                            <td>
+                                <span class="badge"
+                                    :class="{
+                                        'badge-theory': c.curriculum_type === 'Theory Only',
+                                        'badge-lab': c.curriculum_type === 'Lab Only',
+                                        'badge-combo': c.curriculum_type === 'Theory + Lab'
+                                    }"
+                                    x-text="c.curriculum_type"></span>
+                            </td>
+                            <td x-text="c.faculty"></td>
+                            <td x-text="c.total_students"></td>
+                            <td x-text="c.avg_percentage"></td>
+                            <td x-text="c.avg_gpa"></td>
+                            <td x-text="c.pass_count"></td>
+                            <td x-text="c.fail_count"></td>
+                            <td :class="{'fail-high': c.fail_rate > 25}" x-text="c.fail_rate + '%'"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <div x-show="studentList.length > 0" style="margin-top: 30px;">
+            <h2>Students in <span x-text="selectedCourse.code"></span> &mdash; <span x-text="selectedCourse.title"></span></h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Registration No.</th>
+                        <th>Name</th>
+                        <th>Total Marks</th>
+                        <th>Obtained Marks</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                        <th>GPA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="stu in studentList" :key="stu.regno">
+                        <tr>
+                            <td x-text="stu.regno"></td>
+                            <td x-text="stu.name" style="text-align:left;"></td>
+                            <td x-text="stu.total_marks"></td>
+                            <td x-text="stu.obtained_marks"></td>
+                            <td x-text="stu.percentage"></td>
+                            <td x-text="stu.grade || 'N/A'"></td>
+                            <td x-text="stu.gpa || '-'"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function batchApp() {
+            return {
+                years: [],
+                selectedYear: null,
+                classes: [],
+                selectedClass: "",
+                semesters: [],
+                selectedSemester: "",
+
+                courses: [],
+                summary: {},
+                loading: false,
+                error: null,
+
+                selectedCourse: {},
+                studentList: [],
+
+                async loadYears() {
+                    this.loading = true;
+                    try {
+                        const res = await fetch('/api/batch/years');
+                        this.years = await res.json();
+                    } catch (err) {
+                        this.error = "Error loading years";
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async fetchClasses(year) {
+                    this.selectedYear = year;
+                    this.selectedClass = "";
+                    this.selectedSemester = "";
+                    this.classes = [];
+                    this.semesters = [];
+                    this.courses = [];
+                    this.studentList = [];
+
+                    this.loading = true;
+                    this.error = null;
+                    try {
+                        const res = await fetch(`/api/batch/classes/${year}`);
+                        this.classes = await res.json();
+                    } catch (err) {
+                        this.error = "Failed to load batches (classes)";
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async fetchSemesters() {
+                    if (!this.selectedClass) return;
+                    this.selectedSemester = "";
+                    this.semesters = [];
+                    this.courses = [];
+                    this.studentList = [];
+
+                    this.loading = true;
+                    this.error = null;
+                    try {
+                        const res = await fetch(`/api/batch/semesters/${this.selectedYear}/${encodeURIComponent(this.selectedClass)}`);
+                        this.semesters = await res.json();
+                    } catch (err) {
+                        this.error = "Failed to load semesters";
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async fetchCourseAnalysis() {
+                    if (!this.selectedSemester) return;
+
+                    this.loading = true;
+                    this.error = null;
+                    this.courses = [];
+                    this.studentList = [];
+
+                    try {
+                        const res = await fetch(`/api/batch/course-analysis/${this.selectedYear}/${encodeURIComponent(this.selectedClass)}/${this.selectedSemester}`);
+                        this.courses = await res.json();
+                        this.buildSummary();
+                        if (this.courses.length === 0) {
+                            this.error = "No course data found for this batch.";
+                        }
+                    } catch (err) {
+                        this.error = "Failed to load course analysis.";
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                buildSummary() {
+                    const c = this.courses;
+                    const theoryHours = c.reduce((sum, x) => sum + Number(x.theory), 0);
+                    const labHours = c.reduce((sum, x) => sum + Number(x.lab), 0);
+                    const theoryOnly = c.filter(x => x.curriculum_type === 'Theory Only').length;
+                    const labOnly = c.filter(x => x.curriculum_type === 'Lab Only').length;
+                    const combo = c.filter(x => x.curriculum_type === 'Theory + Lab').length;
+                    const avgPct = c.length
+                        ? (c.reduce((s, x) => s + Number(x.avg_percentage || 0), 0) / c.length).toFixed(1)
+                        : 0;
+
+                    this.summary = {
+                        totalCourses: c.length,
+                        theoryHours,
+                        labHours,
+                        theoryOnly,
+                        labOnly,
+                        combo,
+                        avgBatchPercentage: avgPct
+                    };
+                },
+
+                async viewStudents(course) {
+                    this.selectedCourse = course;
+                    this.studentList = [];
+                    this.error = null;
+                    this.loading = true;
+                    try {
+                        const res = await fetch(`/api/batch/course/${course.rid}/students`);
+                        if (!res.ok) {
+                            throw new Error(`Failed to fetch students for rid ${course.rid}: ${res.status}`);
+                        }
+                        this.studentList = await res.json();
+                    } catch (err) {
+                        console.error("Error fetching students:", err);
+                        this.error = "Failed to load student data. Please try again.";
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>
