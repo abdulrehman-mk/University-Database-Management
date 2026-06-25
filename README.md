@@ -1,6 +1,6 @@
 # Batch wise Course Analysis (Curriculum wise)
 
-University Database Management Project — Topic #4
+University Database Management Project
 
 ## Project Description
 
