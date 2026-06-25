@@ -23,18 +23,4 @@ wise) → Student list per course.
 - **Database:** PostgreSQL (works locally or with a cloud Postgres such as
   NeonDB / Render)
 
-## Database Notes
-
-Marks are computed from the `cmarks` / `cdist` tables, which always
-normalize each course's total marks to 100 (verified against the EXAMS
-dump — unlike `marks` / `dist`, whose totals vary and are not used here).
-Grades are looked up from the `grade` table by matching the computed
-percentage against each grade's `start`–`end` range.
-
-A **Batch** = a distinct `(year, class)` pair from `recap` (almost always
-mapped to a single `semester`, with a handful of exceptions like
-`BSCS Open` running in both Fall and Summer of the same year — hence the
-3-step Year → Class → Semester drilldown). Each batch has several
-`recap` rows (one per course offered that term), which is what makes
-"course analysis" meaningful at the batch level.
 
